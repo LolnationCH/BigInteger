@@ -344,6 +344,20 @@ public:
 		return temp;
 	}
 
+	B_int SchonhageStrassen(B_int& a, B_int& b){
+		B_int c;
+		c.retirerZero();
+		std::deque<B_int> convulution = std::deque<B_int>(a.size() + b.size() - 1, { 0 });
+		for (size_t i = 0; i < a.size(); i++){
+			for (size_t j = 0; j < b.size(); j++){
+				convulution[i + j] += a.digits.at(i) * b.digits.at(j);
+			}
+		}
+		//Must add with carry
+		int temp = 0;
+		return c;
+	}
+
 	/*Arithmetic operator=*/
 	B_int& operator+=(B_int b){
 		B_int temp = (*this + b);

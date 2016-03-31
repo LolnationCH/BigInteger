@@ -3,8 +3,9 @@
 
 
 int main(){
-	B_int c(53);
-	B_int temp = c.isPrime();
+	B_int c(123);
+	B_int temp(456);
+	c.SchonhageStrassen(c, temp);
 
 	std::cin.get();
 	return 0;
