@@ -58,6 +58,15 @@ private:
 		}
 		*this = B_int(temp);
 	}
+	B_int powTen(size_t t){
+		B_int c(10);
+		if (t == 0)
+			return B_int(1);
+		for (size_t i = 0; i < t - 1; i++){
+			c.digits.push_front(0);
+		}
+		return c;
+	}
 public:
 	//Constructeur
 	B_int(){ 
@@ -346,15 +355,28 @@ public:
 
 	B_int SchonhageStrassen(B_int& a, B_int& b){
 		B_int c;
-		c.retirerZero();
 		std::deque<B_int> convulution = std::deque<B_int>(a.size() + b.size() - 1, { 0 });
 		for (size_t i = 0; i < a.size(); i++){
 			for (size_t j = 0; j < b.size(); j++){
 				convulution[i + j] += a.digits.at(i) * b.digits.at(j);
 			}
 		}
-		//Must add with carry
-		int temp = 0;
+		B_int carry(0);
+		c.digits.pop_back();
+		for (size_t i = 0; i < convulution.size(); i++){
+			carry += convulution.at(i).digits.at(0);
+			c.digits.push_back(carry.digits.at(0));
+			carry.digits.pop_front();
+			if (carry.size() == 0)
+				carry = 0;
+			for (size_t j = 1; j < convulution.at(i).digits.size(); j++){ //sa fuck icitte, mauvais carry
+				carry += powTen(j-1) * convulution.at(i).digits.at(j);
+			}
+		}
+		for (size_t i = 0; i < carry.size(); i++){
+			c.digits.push_back(carry.digits.at(i));
+		}
+		c.negatif = !(a.negatif == b.negatif);
 		return c;
 	}
 
