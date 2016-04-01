@@ -29,6 +29,7 @@ To be implemented:
 #include <deque>
 #include <sstream>
 #include <stdint.h>
+#include <time.h>
 
 #ifndef b_int_h
 #define b_int_h
@@ -260,7 +261,7 @@ public:
 			//a - b
 			for (size_t i = 0; i < b.digits.size(); i++){
 				uint8_t temp = a.digits.at(i) - b.digits.at(i) - retrait;
-				if (temp < 0){
+				if (temp >= 10){
 					temp += 10;
 					retrait = 1;
 				}
@@ -328,27 +329,12 @@ public:
 		return c;
 	}
 	friend B_int operator%(B_int& a, B_int& b){
-		if (b.digits.size() > a.digits.size()){
-			return B_int(0);
+		if (b > a){
+			return b - a;
 		}
-		B_int temp2(b);
-		B_int push(a.digits.size() - b.digits.size());
-		for (size_t i = 0; B_int(i) < push; i++){
-			temp2.digits.push_front(0);
-		}
-		B_int temp(a);
-		B_int c;
-		for (size_t i = 0; B_int(i) < push + B_int(1); i++){
-			B_int r;
-			while (temp >= temp2){
-				temp = temp - temp2;
-				r = r + B_int(1);
-			}
-			c.digits.push_front(r.digits.at(0));
-			temp2.digits.pop_front();
-		}
-		if (temp == a){
-			return 0;
+		B_int temp(a),temp2(b);
+		while (temp >= temp2){
+			temp = temp - temp2;
 		}
 		return temp;
 	}
@@ -525,13 +511,39 @@ public:
 		return temp2;
 	}
 	bool isPrime(){
-		B_int n = this->sqrt();
-		B_int i = 2;
-		while (i <= n){ //Problème
-			if (*this % i == B_int(0))return false;
-			i++;
+		B_int a = random(2,*this - 2);
+		return Rabin(a);
+	}
+	bool Rabin(B_int a){
+		if (*this == B_int(2))
+			return true;
+		B_int p, e, m, i, k;
+
+		e = *this - 1;
+		m = e;
+		B_int temp = e % 2;
+		for (k = 0; e % 2 == B_int(0); k++)
+			e = e / 2;
+
+		for (p = 1; e > B_int(0); e = e / 2) {
+			if (e % 2 != B_int(0))
+				p = (p * a) % *this;
+			a = (a * a) % *this;
 		}
-		return true;
+		if (p == B_int(1)) return true;
+
+		for (i = 0; i < k; i++) {
+			if (p == m) return true;
+			if (p == B_int(1)) return false;
+			p = (p * p) % *this;
+		}
+		return false;
+	}
+	B_int random(B_int start, B_int end){
+		clock_t time = clock();
+		B_int c = ((((B_int)start) * (int)time) + 1);
+		c =  (c % (end - 1));
+		return c;
 	}
 
 	//From this point, there nothing really special about the code
