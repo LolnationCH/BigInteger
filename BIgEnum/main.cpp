@@ -3,8 +3,8 @@
 
 
 int main(){
-	B_int c("88");
-	B_int temp("88");
+	B_int c("19999999999999999999999999999999999999999999999999");
+	B_int temp("19999999999999999999999999999999999999999999999999");
 	clock_t t;
 	t = clock();
 	std::cout << c.SchonhageStrassen(c, temp) << std::endl;
@@ -14,8 +14,8 @@ int main(){
 	std::cout << c * temp << std::endl;
 	t = clock() - t;
 	std::cout << ((float)t) / CLOCKS_PER_SEC << std::endl;
-	
-	//Je dois reverifier tous les opérateurs arithmétique de base
+	/*
+	std::cout << c.isPrime(100);*/
 	std::cin.get();
 	return 0;
 }

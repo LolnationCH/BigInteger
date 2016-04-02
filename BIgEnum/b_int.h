@@ -68,6 +68,30 @@ private:
 		}
 		return c;
 	}
+	static B_int sub(B_int a, B_int b){
+		uint8_t take = 0;
+		B_int c;
+		c.digits.pop_back();
+		if (b.size() < a.size()){
+			b.digits.push_back(0);
+		}
+		for (size_t i = 0; i < b.size(); i++){
+			uint8_t temp = (a.digits.at(i) - take) - b.digits.at(i);
+			if (temp >= 10){
+				take = 1;
+				temp = 10 - (256 - temp);
+			}
+			else if (take == 1){
+				take = 0;
+			}
+			c.digits.push_back(temp);
+		}
+		for (size_t i = b.size(); i < a.size(); i++){
+			c.digits.push_back(a.digits.at(i));
+		}
+		c.retirerZero();
+		return c;
+	}
 public:
 	//Constructeur
 	B_int(){ 
@@ -190,7 +214,7 @@ public:
 	}
 
 	/*Arithmetic operator*/
-	friend B_int operator+(B_int& a, B_int& b){
+	friend B_int operator+(B_int a, B_int b){
 		a.retirerZero(); b.retirerZero();
 		if (a.negatif){
 			return (b - a);
@@ -233,62 +257,29 @@ public:
 			return c;
 		}
 	}
-	friend B_int operator-(B_int& a, B_int& b){
+	friend B_int operator-(B_int a, B_int b){
 		a.retirerZero(); b.retirerZero();
-		if (a.negatif){
-			if (b.negatif){
-				B_int c(b);
-				c.negatif = false;
-				return (c - a);
-			}
-			else{
-				B_int c(b);
-				c.negatif = true;
-				return (c + a);
-			}
-		}
-		else if (b.negatif){
+		if (b.negatif){
 			B_int c(b);
 			c.negatif = false;
 			return (a + c);
 		}
-		B_int c;
-		c.digits.pop_back();
-		c.negatif = a.negatif;
-
-		int retrait = 0;
-		if (a >= b){
-			//a - b
-			for (size_t i = 0; i < b.digits.size(); i++){
-				uint8_t temp = a.digits.at(i) - b.digits.at(i) - retrait;
-				if (temp >= 10){
-					temp += 10;
-					retrait = 1;
-				}
-				else
-					retrait = 0;
-				c.digits.push_back(temp);
-			}
-			//a
-			for (size_t i = b.digits.size(); i < a.digits.size(); i++){
-				uint8_t temp = a.digits.at(i) - retrait;
-				if (temp < 0){
-					temp += 10;
-					retrait = 1;
-				}
-				else
-					retrait = 0;
-				c.digits.push_back(temp);
-			}
-		}
-		else{
-			c = b - a;
+		if (a.negatif){
+			B_int c(a);
+			c.negatif = false;
+			c = c + b;
 			c.negatif = true;
+			return c;
 		}
-		c.retirerZero();
-		return c;
+		B_int c;
+		if (a < b){
+			c = sub(b, a);
+			c.negatif = true;
+			return c;
+		}
+		return sub(a, b);
 	}
-	friend B_int operator*(B_int& a, B_int& b){
+	friend B_int operator*(B_int a, B_int b){
 		B_int c;
 		for (size_t j = 0; j < a.digits.size(); j++){
 			B_int temp;
@@ -303,7 +294,7 @@ public:
 		c.negatif = !(a.negatif == b.negatif);
 		return c;
 	}
-	friend B_int operator/(B_int& a, B_int& b){
+	friend B_int operator/(B_int a, B_int b){
 		if (b.digits.size() > a.digits.size()){
 			return B_int(0);
 		}
@@ -328,13 +319,24 @@ public:
 		c.retirerZero();
 		return c;
 	}
-	friend B_int operator%(B_int& a, B_int& b){
+	friend B_int operator%(B_int a, B_int b){
 		if (b > a){
 			return b - a;
 		}
-		B_int temp(a),temp2(b);
-		while (temp >= temp2){
-			temp = temp - temp2;
+		B_int temp2(b);
+		B_int push((a.digits.size() - b.digits.size()));
+		for (size_t i = 0; B_int(i) < push; i++){
+			temp2.digits.push_front(0);
+		}
+		B_int temp(a);
+		B_int c;
+		for (size_t i = 0; B_int(i) < push + B_int(1); i++){
+			B_int r;
+			while (temp >= temp2){
+				temp = temp - temp2;
+				r = r + B_int(1);
+			}
+			temp2.digits.pop_front();
 		}
 		return temp;
 	}
@@ -347,15 +349,15 @@ public:
 				convulution[i + j] += a.digits.at(i) * b.digits.at(j);
 			}
 		}
-		B_int carry(0);
+		B_int carry;
 		c.digits.pop_back();
 		for (size_t i = 0; i < convulution.size(); i++){
 			carry += convulution.at(i).digits.at(0);
 			c.digits.push_back(carry.digits.at(0));
 			carry.digits.pop_front();
 			if (carry.size() == 0)
-				carry = 0;
-			for (size_t j = 1; j < convulution.at(i).digits.size(); j++){ //sa fuck icitte, mauvais carry
+				carry.digits.push_back(0);
+			for (size_t j = 1; j < convulution.at(i).digits.size(); j++){
 				carry += powTen(j-1) * convulution.at(i).digits.at(j);
 			}
 		}
@@ -363,6 +365,7 @@ public:
 			c.digits.push_back(carry.digits.at(i));
 		}
 		c.negatif = !(a.negatif == b.negatif);
+		c.retirerZero();
 		return c;
 	}
 
@@ -510,9 +513,18 @@ public:
 		}
 		return temp2;
 	}
-	bool isPrime(){
-		B_int a = random(2,*this - 2);
-		return Rabin(a);
+	bool isPrime(size_t count){
+		size_t i = 1;
+		std::cout << "Starting... Iteration " << i << " ";
+		B_int a;
+		bool test = true;
+		while (test && i < count + 1)
+		{
+			a = random(2, *this - 2);
+			test = Rabin(a);
+			std::cout << ++i << " ";
+		}
+		return test;
 	}
 	bool Rabin(B_int a){
 		if (*this == B_int(2))
@@ -595,147 +607,147 @@ public:
 	}
 	
 	/*Arithmetic operator*/ 
-	friend B_int operator+(B_int& a, long b){
+	friend B_int operator+(B_int a, long b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, long b){
+	friend B_int operator-(B_int a, long b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, long b){
+	friend B_int operator*(B_int a, long b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, long b){
+	friend B_int operator/(B_int a, long b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, long b){
+	friend B_int operator%(B_int a, long b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, long long b){
+	friend B_int operator+(B_int a, long long b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, long long b){
+	friend B_int operator-(B_int a, long long b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, long long b){
+	friend B_int operator*(B_int a, long long b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, long long b){
+	friend B_int operator/(B_int a, long long b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, long long b){
+	friend B_int operator%(B_int a, long long b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, uint8_t b){
+	friend B_int operator+(B_int a, uint8_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, uint8_t b){
+	friend B_int operator-(B_int a, uint8_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, uint8_t b){
+	friend B_int operator*(B_int a, uint8_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, uint8_t b){
+	friend B_int operator/(B_int a, uint8_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, uint8_t b){
+	friend B_int operator%(B_int a, uint8_t b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, int8_t b){
+	friend B_int operator+(B_int a, int8_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, int8_t b){
+	friend B_int operator-(B_int a, int8_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, int8_t b){
+	friend B_int operator*(B_int a, int8_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, int8_t b){
+	friend B_int operator/(B_int a, int8_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, int8_t b){
+	friend B_int operator%(B_int a, int8_t b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, uint16_t b){
+	friend B_int operator+(B_int a, uint16_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, uint16_t b){
+	friend B_int operator-(B_int a, uint16_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, uint16_t b){
+	friend B_int operator*(B_int a, uint16_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, uint16_t b){
+	friend B_int operator/(B_int a, uint16_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, uint16_t b){
+	friend B_int operator%(B_int a, uint16_t b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, int16_t b){
+	friend B_int operator+(B_int a, int16_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, int16_t b){
+	friend B_int operator-(B_int a, int16_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, int16_t b){
+	friend B_int operator*(B_int a, int16_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, int16_t b){
+	friend B_int operator/(B_int a, int16_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, int16_t b){
+	friend B_int operator%(B_int a, int16_t b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, int32_t b){
+	friend B_int operator+(B_int a, int32_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, int32_t b){
+	friend B_int operator-(B_int a, int32_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, int32_t b){
+	friend B_int operator*(B_int a, int32_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, int32_t b){
+	friend B_int operator/(B_int a, int32_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, int32_t b){
+	friend B_int operator%(B_int a, int32_t b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, uint64_t b){
+	friend B_int operator+(B_int a, uint64_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, uint64_t b){
+	friend B_int operator-(B_int a, uint64_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, uint64_t b){
+	friend B_int operator*(B_int a, uint64_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, uint64_t b){
+	friend B_int operator/(B_int a, uint64_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, uint64_t b){
+	friend B_int operator%(B_int a, uint64_t b){
 		return a % B_int(b);
 	}
 
-	friend B_int operator+(B_int& a, size_t b){
+	friend B_int operator+(B_int a, size_t b){
 		return a + B_int(b);
 	}
-	friend B_int operator-(B_int& a, size_t b){
+	friend B_int operator-(B_int a, size_t b){
 		return a - B_int(b);
 	}
-	friend B_int operator*(B_int& a, size_t b){
+	friend B_int operator*(B_int a, size_t b){
 		return a * B_int(b);
 	}
-	friend B_int operator/(B_int& a, size_t b){
+	friend B_int operator/(B_int a, size_t b){
 		return a / B_int(b);
 	}
-	friend B_int operator%(B_int& a, size_t b){
+	friend B_int operator%(B_int a, size_t b){
 		return a % B_int(b);
 	}
 };
