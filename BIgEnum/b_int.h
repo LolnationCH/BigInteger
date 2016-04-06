@@ -19,6 +19,8 @@ Implemented:
 	- Every arithemetic operators (+,-,*,/,%)
 	- Increments (++,--)
 	- The math function pow and sqrt has been added
+	- Pseudo-Random generated number
+	- Prime test of Miller-Rabin (probabilist if the number is bigger then 18 446 744 073 709 551 616)
 
 To be implemented:
 	-logic operator with every integer
@@ -506,6 +508,7 @@ public:
 		}
 		return p;
 	}
+
 	B_int pow(size_t t){
 		B_int temp2 = *this;
 		for (size_t i = 0; i < t - 1; i++){
@@ -513,19 +516,31 @@ public:
 		}
 		return temp2;
 	}
-	bool isPrime(size_t count){
+
+	/*
+		If you want the Miller-Rabin with a pseudo-random generated number, send in parameter true
+	*/
+	bool isPrime(bool cond = false){
 		size_t i = 1;
-		std::cout << "Starting... Iteration " << i << " ";
-		B_int a;
-		bool test = true;
-		while (test && i < count + 1)
-		{
-			a = random(2, *this - 2);
-			test = Rabin(a);
-			std::cout << ++i << " ";
+		if (cond){
+			B_int a;
+			bool test = true;
+			while (test && i < 10 + 1)
+			{
+				a = random(2, *this - 2);
+				test = Rabin(a);
+				std::cout << ++i << " ";
+			}
+			return test;
 		}
-		return test;
+		std::deque <uint8_t> list = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37 };
+		for (int i = 0; i < list.size(); i++){
+			if (!(Rabin(list.at(i))))
+				return false;
+		}
+		return true;
 	}
+	
 	bool Rabin(B_int a){
 		if (*this == B_int(2))
 			return true;
@@ -551,6 +566,7 @@ public:
 		}
 		return false;
 	}
+
 	B_int random(B_int start, B_int end){
 		clock_t time = clock();
 		B_int c = ((((B_int)start) * (int)time) + 1);
